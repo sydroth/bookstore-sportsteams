@@ -1,11 +1,22 @@
 {
   "name": "team-site",
   "version": "0.0.0",
+  "main": "index.js",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
     "build": "babel"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sydroth/bookstore-sportsteams.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sydroth/bookstore-sportsteams/issues"
+  },
+  "homepage": "https://github.com/sydroth/bookstore-sportsteams#readme",
   "dependencies": {
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
@@ -19,3 +30,5 @@
     "babel-cli": "^6.11.4"
   }
 }
+
+
