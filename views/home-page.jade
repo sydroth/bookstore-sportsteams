@@ -1,0 +1,36 @@
+doctype html
+html(lang="en")
+  head
+    link(href='styles.css')
+    link(href='index.js')
+    script(type='text/javascript').
+
+  body
+    .jumbotron
+      .container
+        h1 TeamGeek
+        if loggedIn
+          p 
+            a.btn(href='#', role='button') Manage Additions »
+        else
+          p
+            a.btn(href='#', role='button') Login »
+    br
+
+    .form(action='search.js')
+      input(type='text', name='Search', placeholder='Search')
+      br
+      input(type='submit', value='Submit')
+
+
+
+    .container.col3
+      .panel.dropdown(class="home_panel")
+        h3 NFL
+          p National Football League
+      .panel(class="home_panel")
+        h3 NBA
+          p National Basketball Association
+      .panel(class="home_panel")
+        h3 MLB
+          p Major League Baseball
