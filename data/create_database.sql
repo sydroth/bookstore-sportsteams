@@ -1,0 +1,22 @@
+DROP TABLE IF EXISTS leagues;
+CREATE TABLE leagues (
+  id SERIAL PRIMARY KEY,
+  abbreviation VARCHAR(3)
+);
+
+DROP TABLE IF EXISTS divisions;
+CREATE TABLE divisions (
+  id SERIAL PRIMARY KEY,
+  league_id SERIAL NOT NULL,
+  name VARCHAR(25)
+);
+
+DROP TABLE IF EXISTS teams;
+CREATE TABLE teams (
+  id SERIAL PRIMARY KEY,
+  division_id SERIAL NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  city VARCHAR(255) NOT NULL,
+  head_coach VARCHAR(255) NOT NULL,
+  mascot VARCHAR(255) NOT NULL
+);
