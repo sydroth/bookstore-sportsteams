@@ -4,6 +4,15 @@
 
 The exact same book store project, except instead of books we will use sports teams.
 
+## Project Setup
+
+### Create database for local development
+The following commands assume postgres is installed in the development environment.  
+```
+ > createdb earsplitting-glider
+ > npm run db 
+```
+
 ##Context
 
 Creating this web application will provide exposure to:
