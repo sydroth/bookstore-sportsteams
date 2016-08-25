@@ -1,33 +1,47 @@
 const express = require('express')
 const router = express.Router()
 const _ = require( 'lodash' )
+
 const pgp = require( 'pg-promise' )()
 const connection = { database: 'earsplitting-glider' }
 const db = pgp( connection )
-const indexToRange = (li) => {
-  if (li === '1'){
-    return [0,7]
-  }
-  if (li === '2' ){
-  return [8,13]
-  }
-  if (li === '3'){
-    return [14, 19]
-  } 
-}
+
+const allLeagues = () => `SELECT * FROM leagues`
+const teamsByLeague = leagueId => 
+  `SELECT t.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
+   FROM teams t
+   JOIN divisions d ON d.id=t.division_id 
+   JOIN leagues l ON l.id=d.league_id 
+   WHERE league_id=${leagueId}`
 
 // Read endpoint
 router.get( '/:id', (request, response, next) => {
   // Find that league in our Database
-  let leagueIndex = request.params.id
-  let range = indexToRange(leagueIndex)
-  let querystr = (`SELECT * FROM teams WHERE division_id BETWEEN '${range[0]}' AND '${range[1]}'`)
-  let leagueData = db.any( querystr ).then( data => {
-    response.send( `You are here: /leagues/${request.params.id} and leagueIndex = ${data}` )
-  }).catch( error => {
-    console.log( error )
-    response.send( error )
+  const leagueId = parseInt( request.params.id )
+
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allLeagues() ),
+      transaction.any( teamsByLeague( leagueId ) )
+    ])
   })
+  .then( data => {
+    const [ leagues, teams ] = data
+    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+
+    response.render( 'mlb-detail', { leagues, teams, abbreviation })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
+
+  // db.any( teamsByLeague( leagueId ) ).then( data => {
+  //   const leagueName = ( data || [] )[ 0 ].abbreviation || 'Not Found'
+
+  //   response.render('mlb-detail', { data, leagueName })
+  // }).catch( error => {
+  //   response.send( error )
+  // })
     // Get the :id from the request
   // Display the league detail page related to that league
     // Use the response object to send back a view with some data  
