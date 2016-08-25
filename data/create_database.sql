@@ -1,7 +1,8 @@
 DROP TABLE IF EXISTS leagues;
 CREATE TABLE leagues (
   id SERIAL PRIMARY KEY,
-  abbreviation VARCHAR(3)
+  abbreviation VARCHAR(3),
+  name VARCHAR(255)
 );
 
 DROP TABLE IF EXISTS divisions;

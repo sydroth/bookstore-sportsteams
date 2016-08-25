@@ -1,36 +1,46 @@
-doctype html
-html(lang="en")
-  head
-    link(href='styles.css')
-    link(href='index.js')
-    script(type='text/javascript').
+extends ./layout
 
-  body
-    .jumbotron
-      .container
-        h1 MLB League Details Page
-        if loggedIn
-          p 
-            a.btn(href='#', role='button') Manage Additions »
-        else
-          p
-            a.btn(href='#', role='button') Login »
+block content
+  .jumbotron
+    .container
+      h1 #{abbreviation} League Details Page
+      if loggedIn
+        p 
+          a.btn(href='#', role='button') Manage Additions »
+      else
+        p
+          a.btn(href='#', role='button') Login »
+
+  .form(action='search.js')
+    input(type='text', name='Search', placeholder='Search')
     br
+    input(type='submit', value='Submit')
 
-    .form(action='search.js')
-      input(type='text', name='Search', placeholder='Search')
-      br
-      input(type='submit', value='Submit')
-
-
-
-    .container.col3
+  .container.col3
+    each league in leagues
       .panel.dropdown(class="home_panel")
-        h3 NFL
-          p National Football League
-      .panel(class="home_panel")
-        h3 NBA
-          p National Basketball Association
-      .panel(class="home_panel")
-        h3 MLB
-          p Major League Baseball
+        h3= league.abbreviation
+          p 
+            a.btn(href='/leagues/#{league.id}') #{league.name}
+
+  .container
+    each team in teams
+      div
+        dl(class="dl-horizontal")
+          dt Name
+          dd= team.name
+
+          dt City
+          dd= team.city
+
+          dt Head Coach
+          dd= team.head_coach
+
+          dt Mascot
+          dd= team.mascot
+
+          dt Division
+          dd= team.division_name
+          
+          dt Abbreviation
+          dd= team.abbreviation
