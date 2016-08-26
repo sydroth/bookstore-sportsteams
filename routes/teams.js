@@ -6,84 +6,84 @@ const pgp = require( 'pg-promise' )()
 const connection = { database: 'earsplitting-glider' }
 const db = pgp( connection )
 
-const allLeagues = () => `SELECT * FROM leagues`
-const teamsByLeague = leagueId => 
+const allTeams = () => `SELECT * FROM teams`
+const teamsByName = teamId => 
   `SELECT t.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
    FROM teams t
    JOIN divisions d ON d.id=t.division_id 
-   JOIN leagues l ON l.id=d.league_id 
-   WHERE league_id=${leagueId}`
-const leaguebyID = (id)=>`SELECT * FROM leagues WHERE id=${id}`
-
-
+   JOIN leagues l ON l.id=d.league_id`
+const insertTeamSql = (name) =>
+  `INSERT INTO teams( name ) VALUES ( '${name}' )`
 // Read endpoint
 router.get( '/id/:id', (request, response, next) => {
-  const leagueId = parseInt( request.params.id )
+  const teamId = parseInt( request.params.id )
 
   db.tx( transaction => {
     return transaction.batch([
-      transaction.any( allLeagues() ),
-      transaction.any( teamsByLeague( leagueId ) )
+      transaction.any( allTeams( ) ),
+      transaction.any( teamsByName( teamId) ),
     ])
   })
   .then( data => {
-    const [ leagues, teams ] = data
-    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+    const [ teams, team ] = data
 
-    response.render( 'league_detail', { leagues, teams, abbreviation })
+    response.render( 'team_detail', { teams, team })
   })
   .catch( error => {
     response.send( error.message || error )
   })
+
 })
-
-// View the add a league page
-router.get( '/create', (request, response, next) => {
-    db.any(allLeagues())
-    .then(data =>{
-      response.render( 'add_league', { leagues: data } )
-    })
-    .catch (error => {
-      response.send( error.message || error )
-    })
-  })
-
 
 // View the add a team page
 router.get( '/create', (request, response, next) => {
-  // Display the edit/create form
-  // Just a straight response.render, but with some data to populate dropdowns
+  db.any(allTeams())
+  .then(data =>{
+    response.render( 'add_team', { teams: data } )
+  })
+  .catch (error => {
+    response.send( error.message || error )
+  })
 
-  response.send( 'You are here: /teams/create' )
 })
 
 // View the edit a team page
 router.get( '/edit/:id', (request, response, next) => {
   // Display the edit/create form
-  // Go get the data for this team from the database
-  // Just a straight response.render, but with some data to populate dropdowns and all fields
+  const teamId = parseInt( request.params.id )
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allTeams() )
+    ])
+  })
+  .then( data => {
+    const [ teams, team ] = data
+    response.render( 'add-team', { teams, team })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
 
-  response.send( `You are here: /teams/edit/${request.params.id}` )
 })
 
 // Create a team
 router.post( '/', (request, response, next) => {
-  // Validation of data supplied from user
-  // Insert the data from the form into the database
-
-  response.send( 'You are here: POST /teams' )
+  db.none( insertTeamSql( request.body.name ) )
+    .then( result => response.redirect( '/teams' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
 // Update a team
-router.put( '/:id', (request, response, next) => {
-  // Issue update request to Database
-  // Redirect to team page
+router.post( '/update/:id', (request, response, next) => {
+  const updatedValues = Object.keys( request.body ).map( key => `${key}='${request.body[ key ]}'`).join( ', ' )
+  const sql = `UPDATE teams SET ${updatedValues} WHERE id=${request.params.id}`
 
-  response.send( `You are here: PUT /teams/${request.params.id}` )
+  db.any( sql ).then( result => response.redirect( `/teams/id/${request.params.id}` ) )
+    .then( error => response.send( { error, message: error.message } ))
 })
 
 // Delete a team
-router.delete( '/:id', (request, response, next) => {
+router.delete( '/delete/:id', (request, response, next) => {
   // Issue delete request to database
   // Redirect to the home page
 

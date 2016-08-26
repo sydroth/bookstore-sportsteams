@@ -1,0 +1,30 @@
+doctype html
+html(lang="en")
+  head
+    link(href='styles.css')
+    link(href='index.js')
+    script(type='text/javascript').
+
+  body
+    .jumbotron
+      .container
+        h1 Create/Edit Team 
+
+    .form(action='search.js')
+      input(type='text', name='Search', placeholder='Search')
+      input(type='submit', value='Submit')
+
+    .container.col3
+      each team in teams
+        .panel.dropdown(class="home_panel")
+          h3= team.name
+            p 
+              a.btn(href='/teams/id/#{team.id}') #{team.name}
+
+    .container
+      form(action='/teams' method='post')
+        div
+          input(class='enter-text', type='text', name='name', placeholder='Team Name')        
+        div
+          input(type='submit', value='Submit' )
+    
