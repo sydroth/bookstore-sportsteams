@@ -1,55 +1,96 @@
 const express = require('express')
 const router = express.Router()
+const _ = require( 'lodash' )
+
+const pgp = require( 'pg-promise' )()
+const connection = { database: 'earsplitting-glider' }
+const db = pgp( connection )
+
+const allLeagues = () => `SELECT * FROM leagues`
+const teamsByLeague = leagueId => 
+  `SELECT t.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
+   FROM teams t
+   JOIN divisions d ON d.id=t.division_id 
+   JOIN leagues l ON l.id=d.league_id 
+   WHERE league_id=${leagueId}`
+const leaguebyID = (id)=>`SELECT * FROM leagues WHERE id=${id}`
+const insertLeagueSql = (name, abbreviation) =>
+  `INSERT INTO leagues( name, abbreviation ) VALUES ( '${name}', '${abbreviation}' )`
 
 // Read endpoint
-router.get( '/:id', (request, response, next) => {
-  // Find that team in our Database
-    // Get the :id from the request
-  // Display the team detail page related to that team
-    // Use the response object to send back a view with some data
+router.get( '/id/:id', (request, response, next) => {
+  const leagueId = parseInt( request.params.id )
 
-  response.send( `You are here: /teams/${request.params.id}` )
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allLeagues() ),
+      transaction.any( teamsByLeague( leagueId ) )
+    ])
+  })
+  .then( data => {
+    const [ leagues, teams ] = data
+    const league = leagues.find( league => league.id === leagueId )
+
+    response.render( 'league_detail', { leagues, teams, league })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
 })
 
-// View the add a team page
+// View the add a league page
 router.get( '/create', (request, response, next) => {
-  // Display the edit/create form
-  // Just a straight response.render, but with some data to populate dropdowns
-
-  response.send( 'You are here: /teams/create' )
+  db.any(allLeagues())
+  .then(data =>{
+    response.render( 'add_league', { leagues: data } )
+  })
+  .catch (error => {
+    response.send( error.message || error )
+  })
 })
 
-// View the edit a team page
+// View the edit a league page
 router.get( '/edit/:id', (request, response, next) => {
   // Display the edit/create form
-  // Go get the data for this team from the database
-  // Just a straight response.render, but with some data to populate dropdowns and all fields
-
-  response.send( `You are here: /teams/edit/${request.params.id}` )
+  const leagueId = parseInt( request.params.id )
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allLeagues() ),
+      transaction.any( leaguebyID( leagueId ) )
+    ])
+  })
+  .then( data => {
+    const [ leagues, league ] = data
+    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+    response.render( 'add_league', { leagues, league, abbreviation })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
 })
 
-// Create a team
+// Create a league
 router.post( '/', (request, response, next) => {
-  // Validation of data supplied from user
-  // Insert the data from the form into the database
-
-  response.send( 'You are here: POST /teams' )
+  db.none( insertLeagueSql( request.body.name, request.body.abbreviation ) )
+    .then( result => response.redirect( '/leagues' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
-// Update a team
-router.put( '/:id', (request, response, next) => {
-  // Issue update request to Database
-  // Redirect to team page
+// Update a league
+router.post( '/update/:id', (request, response, next) => {
+  const updatedValues = Object.keys( request.body ).map( key => `${key}='${request.body[ key ]}'`).join( ', ' )
+  const sql = `UPDATE leagues SET ${updatedValues} WHERE id=${request.params.id}`
 
-  response.send( `You are here: PUT /teams/${request.params.id}` )
+  db.any( sql ).then( result => response.redirect( `/leagues/id/${request.params.id}` ) )
+    .then( error => response.send( { error, message: error.message } ))
 })
 
-// Delete a team
-router.delete( '/:id', (request, response, next) => {
+// Delete a league
+router.delete( '/delete/:id', (request, response, next) => {
   // Issue delete request to database
   // Redirect to the home page
 
-  response.send( `You are here: DELETE /teams/${request.params.id}` )
+  response.send( `You are here: DELETE /leagues/${request.params.id}` )
 })
 
 module.exports = router

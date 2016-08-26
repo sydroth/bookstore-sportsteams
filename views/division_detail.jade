@@ -1,0 +1,43 @@
+extends ./layout
+
+block content
+  .jumbotron
+    .container
+      h1 #{abbreviation} Division Details Page
+      if loggedIn
+        p 
+          a.btn(href='#', role='button') Manage Additions »
+      else
+        p
+          a.btn(href='#', role='button') Login »
+
+  .form(action='search.js')
+    input(type='text', name='Search', placeholder='Search')
+    br
+    input(type='submit', value='Submit')
+
+  .container.col3
+    each league in leagues
+      .panel.dropdown(class="home_panel")
+        h3= league.abbreviation
+          p 
+            a.btn(href='/league/id/#{league.id}') #{league.name}
+
+  .container
+    each division in divisions
+      div
+        dl(class="dl-horizontal")
+          dt Name
+          dd= division.name
+
+          dt League
+          dd= division.abbreviation
+
+  .container
+    each Team in divTeam
+      div
+        dl(class="dl-horizontal")
+          dt Name
+          dd= divTeam.name
+
+          
