@@ -27,7 +27,7 @@ block content
       .col-md-9
         h3 Edit League
 
-        form(action='/leagues/update/#{league.id}', method='post')
+        .form(action='/leagues/update/#{league.id}', method='post')
           div.form-group
             input(class='enter-text', type='text', name='name', value='#{league.name}')
           div.form-group
