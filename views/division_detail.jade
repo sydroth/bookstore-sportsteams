@@ -18,26 +18,39 @@ block content
 
   .container.col3
     each league in leagues
-      .panel.dropdown(class="home_panel")
+      panel.dropdown(class="home_panel")
         h3= league.abbreviation
           p 
             a.btn(href='/league/id/#{league.id}') #{league.name}
 
-  .container
-    each division in divisions
-      div
+ .col-md-9
+        h3 Edit League
+
+        form(action='/leagues/update/#{league.id}', method='post')
+          div.form-group
+            input(class='enter-text', type='text', name='name', value='#{league.name}')
+          div.form-group
+            input(class='enter-text', type='text', name='abbreviation', value='#{league.abbreviation}')
+          div.form-group
+            input(type='submit', value='Submit' )
+
+
+  .col-md-9
+    h3 #{divnam} Division
+
+
+    each team in division
+      .container
+      .list-group.col-md-4
+        .list-group-item.list-group-item-info= team.name
         dl(class="dl-horizontal")
-          dt Name
-          dd= division.name
-
-          dt League
-          dd= division.abbreviation
-
-  .container
-    each Team in divTeam
-      div
-        dl(class="dl-horizontal")
-          dt Name
-          dd= divTeam.name
-
+          .list-group-item
+          dt City
+          dd= team.city 
+          .list-group-item
+          dt Head Coach
+          dd= team.head_coach
+          .list-group-item
+          dt Mascot
+          dd=team.mascot
           

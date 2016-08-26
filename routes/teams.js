@@ -51,10 +51,14 @@ router.get( '/create', (request, response, next) => {
 
 // View the add a team page
 router.get( '/create', (request, response, next) => {
-  // Display the edit/create form
-  // Just a straight response.render, but with some data to populate dropdowns
+  db.any(allLeagues())
+  .then(data =>{
+    response.render( 'add_team', { team: data } )
+  })
+  .catch (error => {
+    response.send( error.message || error )
+  })
 
-  response.send( 'You are here: /teams/create' )
 })
 
 // View the edit a team page

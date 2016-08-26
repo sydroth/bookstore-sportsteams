@@ -8,30 +8,26 @@ const db = pgp( connection )
 
 const allLeagues = () => `SELECT * FROM leagues`
 const teamsByDiv = divId => 
-  `SELECT d.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
+  `SELECT t.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
    FROM teams t
    JOIN divisions d ON d.id=t.division_id 
    JOIN leagues l ON l.id=d.league_id 
-   WHERE league_id=${divId}`
-const leaguebyID = (id)=>`SELECT * FROM leagues WHERE id=${id}`
-const teamsFromDiv = value =>
-`SELECT * FROM teams WHERE division_id=${divId}`
-// Read endpoint
+   WHERE division_id=${divId}`
+
+
 router.get( '/id/:id', (request, response, next) => {
   const divId = parseInt( request.params.id )
-
   db.tx( transaction => {
     return transaction.batch([
       transaction.any( allLeagues() ),
-      transaction.any( teamsByDiv( divId ) ),
-      transaction.any( teamsFromDiv(divId))
+      transaction.any( teamsByDiv(divId) )
     ])
   })
   .then( data => {
-    const [ leagues, divisions, divTeams ] = data
-    const abbreviation = leagues.find( league => league.id === divId ).abbreviation
-    console.log(divisions)
-    response.render( 'division_detail', { leagues, divisions, divTeams, abbreviation })
+    const [ leagues, division] = data
+    const divnam = division[0].division_name
+    console.log(divnam)
+    response.render( 'division_detail', { leagues, division, divnam })
   })
   .catch( error => {
     response.send( error.message || error )
@@ -40,43 +36,59 @@ router.get( '/id/:id', (request, response, next) => {
 
 // View the add a league page
 router.get( '/create', (request, response, next) => {
-  // Display the edit/create form
-  // Just a straight response.render, but with some data to populate dropdowns
+  db.any(allLeagues())
+  .then(data =>{
+    response.render( 'add_division', { leagues: data } )
+  })
+  .catch (error => {
+    response.send( error.message || error )
+  })
 
-  response.send( 'You are here: /divisions/create' )
 })
 
 // View the edit a league page
 router.get( '/edit/:id', (request, response, next) => {
   // Display the edit/create form
-  // Go get the data for this league from the database
-  // Just a straight response.render, but with some data to populate dropdowns and all fields
+  const leagueId = parseInt( request.params.id )
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allLeagues() ),
+      transaction.any( leaguebyID( leagueId ) )
+    ])
+  })
+  .then( data => {
+    const [ leagues, league ] = data
+    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+    response.render( 'add_division', { leagues, league, abbreviation })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
 
-  response.send( `You are here: /divisions/edit/${request.params.id}` )
 })
 
 // Create a league
 router.post( '/', (request, response, next) => {
-  // Validation of data supplied from user
-  // Insert the data from the form into the database
-
-  response.send( 'You are here: POST /divisions' )
+  db.none( insertLeagueSql( request.body.name ) )
+    .then( result => response.redirect( '/divisions' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
 // Update a league
-router.put( '/:id', (request, response, next) => {
-  // Issue update request to Database
-  // Redirect to league page
+router.post( '/update/:id', (request, response, next) => {
+  const updatedValues = Object.keys( request.body ).map( key => `${key}='${request.body[ key ]}'`).join( ', ' )
+  const sql = `UPDATE divisions SET ${updatedValues} WHERE id=${request.params.id}`
 
-  response.send( `You are here: PUT /divisions/${request.params.id}` )
+  db.any( sql ).then( result => response.redirect( `/divisions/id/${request.params.id}` ) )
+    .then( error => response.send( { error, message: error.message } ))
 })
 
 // Delete a league
-router.delete( '/:id', (request, response, next) => {
-  // Issue delete request to database
-  // Redirect to the home page
-
-  response.send( `You are here: DELETE /divisions/${request.params.id}` )
+router.delete( '/delete/:id', (request, response, next) => {
+  const sql = `DELETE divisions SET ${updatedValues} WHERE id=${request.params.id}`
+   db.none( sql )
+    .then( result => response.redirect( 'home-page' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
 module.exports = router

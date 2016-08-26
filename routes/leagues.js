@@ -90,10 +90,10 @@ router.post( '/update/:id', (request, response, next) => {
 
 // Delete a league
 router.delete( '/delete/:id', (request, response, next) => {
-  // Issue delete request to database
-  // Redirect to the home page
-
-  response.send( `You are here: DELETE /leagues/${request.params.id}` )
+  const sql = `DELETE leagues SET ${updatedValues} WHERE id=${request.params.id}`
+   db.none( insertLeagueSql( request.body.name, request.body.abbreviation ) )
+    .then( result => response.redirect( 'home-page' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
 module.exports = router
