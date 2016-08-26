@@ -36,6 +36,7 @@ router.get( '/id/:id', (request, response, next) => {
   .catch( error => {
     response.send( error.message || error )
   })
+
 })
 
 // View the add a league page
@@ -47,6 +48,7 @@ router.get( '/create', (request, response, next) => {
   .catch (error => {
     response.send( error.message || error )
   })
+
 })
 
 // View the edit a league page
@@ -67,6 +69,7 @@ router.get( '/edit/:id', (request, response, next) => {
   .catch( error => {
     response.send( error.message || error )
   })
+
 })
 
 // Create a league
