@@ -1,0 +1,38 @@
+doctype html
+html(lang="en")
+  head
+    link(href='styles.css')
+    link(href='index.js')
+    script(type='text/javascript').
+
+  body
+    .jumbotron
+      .container
+        h1 Create/Edit League 
+        if loggedIn
+          p 
+            a.btn(href='#', role='button') Manage Additions »
+        else
+          p
+            a.btn(href='#', role='button') Login »
+
+    .form(action='search.js')
+      input(type='text', name='Search', placeholder='Search')
+      input(type='submit', value='Submit')
+
+    .container.col3
+      each league in leagues
+        .panel.dropdown(class="home_panel")
+          h3= league.abbreviation
+            p 
+              a.btn(href='/leagues/id/#{league.id}') #{league.name}
+
+    .container
+      form(action='/leagues' method='post')
+        div
+          input(class='enter-text', type='text', name='name', placeholder='National Hockey League')
+        div
+          input(class='enter-text', type='text', name='abbreviation', placeholder='NHL')
+        div
+          input(type='submit', value='Submit' )
+    

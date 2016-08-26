@@ -13,10 +13,12 @@ const teamsByLeague = leagueId =>
    JOIN divisions d ON d.id=t.division_id 
    JOIN leagues l ON l.id=d.league_id 
    WHERE league_id=${leagueId}`
+const leaguebyID = (id)=>`SELECT * FROM leagues WHERE id=${id}`
+const insertLeagueSql = (name, abbreviation) =>
+  `INSERT INTO leagues( name, abbreviation ) VALUES ( '${name}', '${abbreviation}' )`
 
 // Read endpoint
-router.get( '/:id', (request, response, next) => {
-  // Find that league in our Database
+router.get( '/id/:id', (request, response, next) => {
   const leagueId = parseInt( request.params.id )
 
   db.tx( transaction => {
@@ -27,63 +29,67 @@ router.get( '/:id', (request, response, next) => {
   })
   .then( data => {
     const [ leagues, teams ] = data
-    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+    const league = leagues.find( league => league.id === leagueId )
 
-    response.render( 'mlb-detail', { leagues, teams, abbreviation })
+    response.render( 'league_detail', { leagues, teams, league })
   })
   .catch( error => {
     response.send( error.message || error )
   })
 
-  // db.any( teamsByLeague( leagueId ) ).then( data => {
-  //   const leagueName = ( data || [] )[ 0 ].abbreviation || 'Not Found'
-
-  //   response.render('mlb-detail', { data, leagueName })
-  // }).catch( error => {
-  //   response.send( error )
-  // })
-    // Get the :id from the request
-  // Display the league detail page related to that league
-    // Use the response object to send back a view with some data  
- 
-  // response.send( `You are here: /leagues/${request.params.id} and leagueIndex = ${leagueData}` )
 })
 
 // View the add a league page
 router.get( '/create', (request, response, next) => {
-  // Display the edit/create form
-  // Just a straight response.render, but with some data to populate dropdowns
+  db.any(allLeagues())
+  .then(data =>{
+    response.render( 'add_league', { leagues: data } )
+  })
+  .catch (error => {
+    response.send( error.message || error )
+  })
 
-  response.send( 'You are here: /leagues/create' )
 })
 
 // View the edit a league page
 router.get( '/edit/:id', (request, response, next) => {
   // Display the edit/create form
-  // Go get the data for this league from the database
-  // Just a straight response.render, but with some data to populate dropdowns and all fields
+  const leagueId = parseInt( request.params.id )
+  db.tx( transaction => {
+    return transaction.batch([
+      transaction.any( allLeagues() ),
+      transaction.any( leaguebyID( leagueId ) )
+    ])
+  })
+  .then( data => {
+    const [ leagues, league ] = data
+    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
+    response.render( 'add_league', { leagues, league, abbreviation })
+  })
+  .catch( error => {
+    response.send( error.message || error )
+  })
 
-  response.send( `You are here: /leagues/edit/${request.params.id}` )
 })
 
 // Create a league
 router.post( '/', (request, response, next) => {
-  // Validation of data supplied from user
-  // Insert the data from the form into the database
-
-  response.send( 'You are here: POST /leagues' )
+  db.none( insertLeagueSql( request.body.name, request.body.abbreviation ) )
+    .then( result => response.redirect( '/leagues' ))
+    .catch( error => response.send({ error, message: error.message }))
 })
 
 // Update a league
-router.put( '/:id', (request, response, next) => {
-  // Issue update request to Database
-  // Redirect to league page
+router.post( '/update/:id', (request, response, next) => {
+  const updatedValues = Object.keys( request.body ).map( key => `${key}='${request.body[ key ]}'`).join( ', ' )
+  const sql = `UPDATE leagues SET ${updatedValues} WHERE id=${request.params.id}`
 
-  response.send( `You are here: PUT /leagues/${request.params.id}` )
+  db.any( sql ).then( result => response.redirect( `/leagues/id/${request.params.id}` ) )
+    .then( error => response.send( { error, message: error.message } ))
 })
 
 // Delete a league
-router.delete( '/:id', (request, response, next) => {
+router.delete( '/delete/:id', (request, response, next) => {
   // Issue delete request to database
   // Redirect to the home page
 

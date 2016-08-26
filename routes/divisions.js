@@ -7,30 +7,31 @@ const connection = { database: 'earsplitting-glider' }
 const db = pgp( connection )
 
 const allLeagues = () => `SELECT * FROM leagues`
-const teamsByLeague = leagueId => 
-  `SELECT t.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
+const teamsByDiv = divId => 
+  `SELECT d.*, d.name as division_name, d.id as division_id, l.id as league_id, l.abbreviation, l.name as league_name 
    FROM teams t
    JOIN divisions d ON d.id=t.division_id 
    JOIN leagues l ON l.id=d.league_id 
-   WHERE league_id=${leagueId}`
+   WHERE league_id=${divId}`
 const leaguebyID = (id)=>`SELECT * FROM leagues WHERE id=${id}`
-
-
+const teamsFromDiv = value =>
+`SELECT * FROM teams WHERE division_id=${divId}`
 // Read endpoint
 router.get( '/id/:id', (request, response, next) => {
-  const leagueId = parseInt( request.params.id )
+  const divId = parseInt( request.params.id )
 
   db.tx( transaction => {
     return transaction.batch([
       transaction.any( allLeagues() ),
-      transaction.any( teamsByLeague( leagueId ) )
+      transaction.any( teamsByDiv( divId ) ),
+      transaction.any( teamsFromDiv(divId))
     ])
   })
   .then( data => {
-    const [ leagues, teams ] = data
-    const abbreviation = leagues.find( league => league.id === leagueId ).abbreviation
-
-    response.render( 'league_detail', { leagues, teams, abbreviation })
+    const [ leagues, divisions, divTeams ] = data
+    const abbreviation = leagues.find( league => league.id === divId ).abbreviation
+    console.log(divisions)
+    response.render( 'division_detail', { leagues, divisions, divTeams, abbreviation })
   })
   .catch( error => {
     response.send( error.message || error )
@@ -39,55 +40,43 @@ router.get( '/id/:id', (request, response, next) => {
 
 // View the add a league page
 router.get( '/create', (request, response, next) => {
-    db.any(allLeagues())
-    .then(data =>{
-      response.render( 'add_league', { leagues: data } )
-    })
-    .catch (error => {
-      response.send( error.message || error )
-    })
-  })
-
-
-// View the add a team page
-router.get( '/create', (request, response, next) => {
   // Display the edit/create form
   // Just a straight response.render, but with some data to populate dropdowns
 
-  response.send( 'You are here: /teams/create' )
+  response.send( 'You are here: /divisions/create' )
 })
 
-// View the edit a team page
+// View the edit a league page
 router.get( '/edit/:id', (request, response, next) => {
   // Display the edit/create form
-  // Go get the data for this team from the database
+  // Go get the data for this league from the database
   // Just a straight response.render, but with some data to populate dropdowns and all fields
 
-  response.send( `You are here: /teams/edit/${request.params.id}` )
+  response.send( `You are here: /divisions/edit/${request.params.id}` )
 })
 
-// Create a team
+// Create a league
 router.post( '/', (request, response, next) => {
   // Validation of data supplied from user
   // Insert the data from the form into the database
 
-  response.send( 'You are here: POST /teams' )
+  response.send( 'You are here: POST /divisions' )
 })
 
-// Update a team
+// Update a league
 router.put( '/:id', (request, response, next) => {
   // Issue update request to Database
-  // Redirect to team page
+  // Redirect to league page
 
-  response.send( `You are here: PUT /teams/${request.params.id}` )
+  response.send( `You are here: PUT /divisions/${request.params.id}` )
 })
 
-// Delete a team
+// Delete a league
 router.delete( '/:id', (request, response, next) => {
   // Issue delete request to database
   // Redirect to the home page
 
-  response.send( `You are here: DELETE /teams/${request.params.id}` )
+  response.send( `You are here: DELETE /divisions/${request.params.id}` )
 })
 
 module.exports = router

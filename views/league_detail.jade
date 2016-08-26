@@ -1,0 +1,58 @@
+extends ./layout
+
+block content
+  .container
+    .jumbotron
+      h1 #{league.abbreviation} League Details Page
+      if loggedIn
+        p 
+          a.btn(href='#', role='button') Manage Additions »
+      else
+        p
+          a.btn(href='#', role='button') Login »
+
+  .container
+    .row
+      .col-md-3
+        form(action='/search', method='get')
+          input(type='text', name='q', placeholder='Search')
+          input(type='submit', value='Submit')
+
+        div
+          h3 View Other Leagues
+          each league in leagues
+            div
+              a.btn(href='/leagues/id/#{league.id}') #{league.name} »
+
+      .col-md-9
+        h3 Edit League
+
+        form(action='/leagues/update/#{league.id}', method='post')
+          div.form-group
+            input(class='enter-text', type='text', name='name', value='#{league.name}')
+          div.form-group
+            input(class='enter-text', type='text', name='abbreviation', value='#{league.abbreviation}')
+          div.form-group
+            input(type='submit', value='Submit' )
+
+      .col-md-9
+        h3 Team Listing
+
+        each team in teams
+          .list-group.col-md-4
+            .list-group-item.list-group-item-info= team.name
+            .list-group-item 
+              b City 
+              span= team.city
+            .list-group-item 
+              b Head Coach 
+              span= team.head_coach
+            .list-group-item 
+              b Mascot 
+              span= team.mascot
+            .list-group-item 
+              b Division 
+              span= team.division_name
+            .list-group-item 
+              b Abbreviation 
+              span= team.abbreviation
